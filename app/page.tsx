@@ -1,11 +1,11 @@
 "use client"
-import  { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { Search, Users, Layers, Wallet, TrendingUp, AlertTriangle, X } from "lucide-react";
 
 /* ---------------- DATA (linkээс уншсан — 04–06 сар хэсэгчилсэн) ---------------- */
 const MONTHS = ["1-р сар", "2-р сар", "3-р сар", "4-р сар", "5-р сар", "6-р сар"];
-const RAW = [
+const RAW: [string, string, string, string, number[]][] = [
 ["PADA1-04_2025_9","Думанбек","95411155","dumanbek18@gmail.com",[0,0,0,0,0,0]],
 ["PADA1-04_2025_9","Гантулга","88328224","odonbymbagantulga@gmail.com",[0,0,0,0,0,0]],
 ["PADA1-04_2025_9","Тод-Эрхэс","80070788","m.moogii82@gmail.com",[0,0,0,0,0,0]],
@@ -102,15 +102,15 @@ const students = RAW.map((r, i) => ({
 
 const COHORT_ORDER = [...new Set(students.map((s) => s.cohort))];
 const PALETTE = ["#1F3864", "#2E75B6", "#0E7C86", "#5B8C5A", "#B07A2E", "#7E5BA6", "#C2575B", "#3E7CB1", "#6B7280"];
-const cohortColor = (c) => PALETTE[COHORT_ORDER.indexOf(c) % PALETTE.length];
-const startOf = (c) => { const p = c.split("_"); return p.length >= 3 ? `${p[p.length - 2]}-${p[p.length - 1].padStart(2, "0")}` : ""; };
+const cohortColor = (c: string) => PALETTE[COHORT_ORDER.indexOf(c) % PALETTE.length];
+const startOf = (c: string) => { const p = c.split("_"); return p.length >= 3 ? `${p[p.length - 2]}-${p[p.length - 1].padStart(2, "0")}` : ""; };
 
-const fmt = (n) => (n < 0 ? "(" + Math.abs(n).toLocaleString("en-US") + ")" : n.toLocaleString("en-US"));
-const fmtShort = (n) => { const a = Math.abs(n); if (a >= 1e6) return (n / 1e6).toFixed(1) + "сая"; if (a >= 1e3) return Math.round(n / 1e3) + "мян"; return "" + n; };
+const fmt = (n: number) => (n < 0 ? "(" + Math.abs(n).toLocaleString("en-US") + ")" : n.toLocaleString("en-US"));
+const fmtShort = (n: number) => { const a = Math.abs(n); if (a >= 1e6) return (n / 1e6).toFixed(1) + "сая"; if (a >= 1e3) return Math.round(n / 1e3) + "мян"; return "" + n; };
 
 export default function Dashboard() {
   const [query, setQuery] = useState("");
-  const [activeCohort, setActiveCohort] = useState(null);
+  const [activeCohort, setActiveCohort] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState("total");
   const [sortDir, setSortDir] = useState("desc");
 
@@ -140,10 +140,18 @@ export default function Dashboard() {
     });
   }, [query, activeCohort, sortKey, sortDir]);
 
-  const setSort = (k) => { if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc"); else { setSortKey(k); setSortDir("desc"); } };
+  const setSort = (k: string) => { if (sortKey === k) setSortDir(sortDir === "asc" ? "desc" : "asc"); else { setSortKey(k); setSortDir("desc"); } };
   const refunds = students.filter((s) => s.months.some((m) => m < 0));
 
-  const KPI = ({ icon: Icon, label, value, sub, accent }) => (
+  interface KPIProps {
+    icon: React.ComponentType<any>;
+    label: React.ReactNode;
+    value: React.ReactNode;
+    sub?: React.ReactNode;
+    accent?: string;
+  }
+
+  const KPI = ({ icon: Icon, label, value, sub, accent }: KPIProps) => (
     <div className="bg-white rounded-xl border border-slate-200 p-4 flex flex-col gap-1 shadow-sm">
       <div className="flex items-center gap-2 text-slate-500 text-[11px] font-semibold uppercase tracking-wide">
         <Icon size={14} style={{ color: accent }} /> {label}
@@ -190,8 +198,8 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={monthData} margin={{ top: 8, right: 8, left: 8, bottom: 0 }}>
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#64748B" }} axisLine={false} tickLine={false} />
-                <YAxis tickFormatter={fmtShort} tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={42} />
-                <Tooltip formatter={(v) => [`${fmt(v)} ₮`, "Орлого"]} cursor={{ fill: "#EEF2FA" }} contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }} />
+                <YAxis tickFormatter={(v) => fmtShort(Number(v))} tick={{ fontSize: 10, fill: "#94A3B8" }} axisLine={false} tickLine={false} width={42} />
+                <Tooltip formatter={(v) => [`${fmt(Number(v) || 0)} ₮`, "Орлого"]} cursor={{ fill: "#EEF2FA" }} contentStyle={{ borderRadius: 8, border: "1px solid #E2E8F0", fontSize: 12 }} />
                 <Bar dataKey="value" radius={[5, 5, 0, 0]} fill="#2E75B6" />
               </BarChart>
             </ResponsiveContainer>
